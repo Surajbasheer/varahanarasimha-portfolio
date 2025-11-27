@@ -84,7 +84,7 @@ const ContactPage = () => {
                 <div>
                   <h3 className="font-bold text-lg">Phone</h3>
                   <a 
-                    href="tel:+917995853246"
+                    href="tel:+919959101971"
                     className="text-gray-600 hover:text-black transition-colors duration-300"
                   >
                     +91 9959101971
