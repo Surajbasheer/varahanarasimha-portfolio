@@ -1,28 +1,50 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI/CD
+name: Deploy Next.js to EC2
 
 on:
   push:
     branches: [ "main" ]
-    
-  pull_request:
-    branches: [ "main" ]
+
 jobs:
-  build:
+  deploy:
     runs-on: self-hosted
-    strategy:
-      matrix:
-        node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Upload files to EC2
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: "."
+          target: "/home/ubuntu/my-app"
+
+      - name: Restart app on EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/my-app
+
+            echo "Installing dependencies on EC2..."
+            npm install --omit=dev
+
+            echo "Restarting Next.js app with PM2..."
+            pm2 stop nextjs || true
+            pm2 delete nextjs || true
+            pm2 start npm --name "nextjs" -- start
