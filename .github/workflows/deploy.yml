@@ -21,9 +21,9 @@ jobs:
       run: |
         cd my-app
         npm install
-        npx next build
+        npm run build
 
-    - name: Upload app contents to EC2 (FIXED)
+    - name: Upload CONTENTS of my-app (FIXED)
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.EC2_HOST }}
